@@ -34,7 +34,7 @@ open class BaseConnection: Connection
         self.log = logger
     }
 
-    public func read(size: Int) -> Data?
+    open func read(size: Int) -> Data?
     {
         defer
         {
@@ -85,7 +85,7 @@ open class BaseConnection: Connection
         }
     }
 
-    public func unsafeRead(size: Int) -> Data?
+    open func unsafeRead(size: Int) -> Data?
     {
         do
         {
@@ -136,7 +136,7 @@ open class BaseConnection: Connection
         }
     }
 
-    public func read(maxSize: Int) -> Data?
+    open func read(maxSize: Int) -> Data?
     {
         defer
         {
@@ -197,7 +197,7 @@ open class BaseConnection: Connection
     }
 
 
-    public func write(string: String) -> Bool
+    open func write(string: String) -> Bool
     {
         let data = string.data
         let success = write(data: data)
@@ -206,7 +206,7 @@ open class BaseConnection: Connection
         return success
     }
 
-    public func write(data: Data) -> Bool
+    open func write(data: Data) -> Bool
     {
         defer
         {
@@ -227,7 +227,7 @@ open class BaseConnection: Connection
         return true
     }
 
-    public func readWithLengthPrefix(prefixSizeInBits: Int) -> Data?
+    open func readWithLengthPrefix(prefixSizeInBits: Int) -> Data?
     {
         defer
         {
@@ -243,7 +243,7 @@ open class BaseConnection: Connection
         return result
     }
 
-    public func writeWithLengthPrefix(data: Data, prefixSizeInBits: Int) -> Bool
+    open func writeWithLengthPrefix(data: Data, prefixSizeInBits: Int) -> Bool
     {
         defer
         {
@@ -254,21 +254,21 @@ open class BaseConnection: Connection
         return TransmissionTypes.writeWithLengthPrefix(data: data, prefixSizeInBits: prefixSizeInBits, connection: self)
     }
 
-    public func identifier() -> Int
+    open func identifier() -> Int
     {
         return self.id
     }
 
-    public func close()
+    open func close()
     {
     }
 
-    private func networkWrite(data: Data) throws
+    open func networkWrite(data: Data) throws
     {
         throw BaseConnectionError.unimplemented
     }
 
-    private func networkRead(size: Int) throws -> Data
+    open func networkRead(size: Int) throws -> Data
     {
         throw BaseConnectionError.unimplemented
     }
