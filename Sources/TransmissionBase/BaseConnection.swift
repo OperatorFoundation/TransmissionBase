@@ -6,10 +6,14 @@
 //
 
 import Foundation
+#if os(macOS)
+import os.log
+#else
+import Logging
+#endif
 
 import Chord
 import Datable
-import Logging
 import SwiftHexTools
 import SwiftQueue
 import TransmissionTypes
