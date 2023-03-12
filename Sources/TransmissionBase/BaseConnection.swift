@@ -15,7 +15,7 @@ import SwiftQueue
 import TransmissionTypes
 import Net
 
-public class BaseConnection: Connection
+open class BaseConnection: Connection
 {
     let id: Int
     let log: Logger?
