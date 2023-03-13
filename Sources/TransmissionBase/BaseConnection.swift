@@ -170,7 +170,7 @@ open class BaseConnection: Connection
 
             do
             {
-                let data = try self.networkRead(size: maxSize - self.buffer.count)
+                data = try self.networkRead(size: maxSize - self.buffer.count)
             }
             catch
             {
@@ -249,12 +249,6 @@ open class BaseConnection: Connection
 
     open func writeWithLengthPrefix(data: Data, prefixSizeInBits: Int) -> Bool
     {
-        defer
-        {
-            self.writeLock.signal()
-        }
-        self.writeLock.wait()
-
         return TransmissionTypes.writeWithLengthPrefix(data: data, prefixSizeInBits: prefixSizeInBits, connection: self)
     }
 
