@@ -50,7 +50,7 @@ open class BaseConnection: Connection
         {
             if size == 0
             {
-                print("TransmissionLinux: requested read size was zero")
+                print("📻 TransmissionBase: requested read size was zero")
                 return nil
             }
 
@@ -58,7 +58,7 @@ open class BaseConnection: Connection
             {
                 let result = Data(buffer[0..<size])
                 buffer = Data(buffer[size..<buffer.count])
-                print("TransmissionLinux: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
+                print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
                 return result
             }
 
@@ -78,7 +78,7 @@ open class BaseConnection: Connection
 
             let result = Data(buffer[0..<size])
             buffer = Data(buffer[size..<buffer.count])
-            print("TransmissionLinux: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
+            print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
 
             return result
         }
@@ -93,11 +93,9 @@ open class BaseConnection: Connection
     {
         do
         {
-            print("TransmissionLinux: unsafeRead(size: \(size))")
-
             if size == 0
             {
-                print("TransmissionLinux: requested read size was zero")
+                print("📻 TransmissionBase: requested read size was zero")
                 return nil
             }
 
@@ -105,17 +103,15 @@ open class BaseConnection: Connection
             {
                 let result = Data(buffer[0..<size])
                 buffer = Data(buffer[size..<buffer.count])
-                print("TransmissionLinux: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
+                print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
                 return result
             }
 
-            print("TransmissionLinux: unsafeRead calling networkRead()")
             let data = try networkRead(size: size)
-            print("TransmissionLinux: unsafeRead returned from networkRead()")
 
             guard data.count > 0 else
             {
-                print("TransmissionLinux: unsafeRead received 0 bytes from networkRead()")
+                print("📻 TransmissionBase: unsafeRead received 0 bytes from networkRead()")
                 return nil
             }
 
@@ -123,19 +119,19 @@ open class BaseConnection: Connection
 
             guard size <= buffer.count else
             {
-                print("TransmissionLinux: unsafeRead requested size \(size) is larger than the buffer size \(buffer.count). Returning nil.")
+                print("📻 TransmissionBase: unsafeRead requested size \(size) is larger than the buffer size \(buffer.count). Returning nil.")
                 return nil
             }
 
             let result = Data(buffer[0..<size])
             buffer = Data(buffer[size..<buffer.count])
-            print("TransmissionLinux: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
+            print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
 
             return result
         }
         catch
         {
-            print("error in BaseConnection.unsafeRead(\(size)): \(error)")
+            print("📻 error in BaseConnection.unsafeRead(\(size)): \(error)")
             return nil
         }
     }
@@ -160,7 +156,7 @@ open class BaseConnection: Connection
             let result = Data(buffer[0..<size])
             buffer = Data(buffer[size..<buffer.count])
 
-            print("TransmissionLinux: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
+            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
             return result
         }
         else
@@ -174,19 +170,19 @@ open class BaseConnection: Connection
             }
             catch
             {
-                print("TransmissionLinux: TransmissionConnection.read(maxSize: \(maxSize)) - Error trying to read from the network: \(error)")
+                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error trying to read from the network: \(error)")
                 return nil
             }
 
             guard let bytes = data else
             {
-                print("TransmissionLinux: TransmissionConnection.read(maxSize: \(maxSize)) - Error received a nil response when attempting to read from the network.")
+                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received a nil response when attempting to read from the network.")
                 return nil
             }
 
             guard bytes.count > 0 else
             {
-                print("TransmissionLinux: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
+                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
                 return nil
             }
 
@@ -195,7 +191,7 @@ open class BaseConnection: Connection
             let result = Data(buffer[0..<targetSize])
             buffer = Data(buffer[targetSize..<buffer.count])
 
-            print("TransmissionLinux: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
+            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
             return result
         }
     }
@@ -206,7 +202,6 @@ open class BaseConnection: Connection
         let data = string.data
         let success = write(data: data)
 
-        print("TransmissionLinux: TransmissionConnection.networkWrite -> write(string:), success: \(success)")
         return success
     }
 
@@ -224,7 +219,7 @@ open class BaseConnection: Connection
         }
         catch
         {
-            print("error in BaseConnection.write(\(data.count) bytes - \(data.hex) - \"\(data.string)\"")
+            print("📻 error in BaseConnection.write(\(data.count) bytes - \(data.hex) - \"\(data.string)\"")
             return false
         }
 
@@ -259,6 +254,7 @@ open class BaseConnection: Connection
 
     open func close()
     {
+        print("📻 BaseConnection close() called.")
     }
 
     open func networkWrite(data: Data) throws
