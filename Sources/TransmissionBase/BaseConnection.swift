@@ -14,6 +14,7 @@ import Logging
 
 import Chord
 import Datable
+import Straw
 import SwiftHexTools
 import SwiftQueue
 import TransmissionTypes
@@ -30,7 +31,7 @@ open class BaseConnection: Connection
     var readLock = DispatchSemaphore(value: 1)
     var writeLock = DispatchSemaphore(value: 1)
 
-    var buffer: Data = Data()
+    var buffer = Straw()
 
     public init?(id: Int, logger: Logger? = nil)
     {
@@ -45,48 +46,48 @@ open class BaseConnection: Connection
             readLock.signal()
         }
         readLock.wait()
+        
+        var result: Data? = nil
+        
+        if size == 0
+        {
+            print("📻 TransmissionBase: requested read size was zero")
+            return nil
+        }
+        
+        while self.buffer.count < size
+        {
+            do
+            {
+                let data = try networkRead(size: size)
 
+                guard data.count > 0 else
+                {
+                    return nil
+                }
+
+                buffer.write(data)
+            }
+            catch
+            {
+                print("📻 TransmissionBase: error in BaseConnection.read(\(size)): \(error)")
+                return nil
+            }
+        }
+        
         do
         {
-            if size == 0
-            {
-                print("📻 TransmissionBase: requested read size was zero")
-                return nil
-            }
-
-            if size <= buffer.count
-            {
-                let result = Data(buffer[0..<size])
-                buffer = Data(buffer[size..<buffer.count])
-                print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
-                return result
-            }
-
-            let data = try networkRead(size: size)
-
-            guard data.count > 0 else
-            {
-                return nil
-            }
-
-            buffer.append(data)
-
-            guard size <= buffer.count else
-            {
-                return nil
-            }
-
-            let result = Data(buffer[0..<size])
-            buffer = Data(buffer[size..<buffer.count])
-            print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
-
-            return result
+            result = try buffer.read(size: size)
         }
         catch
         {
-            print("error in BaseConnection.read(\(size)): \(error)")
+            print("📻 TransmissionBase: error reading from Straw: \(error)")
             return nil
         }
+        
+        print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result?.count) bytes.")
+        
+        return result
     }
 
     open func unsafeRead(size: Int) -> Data?
@@ -99,39 +100,24 @@ open class BaseConnection: Connection
                 return nil
             }
 
-            if size <= buffer.count
+            while size > buffer.count
             {
-                let result = Data(buffer[0..<size])
-                buffer = Data(buffer[size..<buffer.count])
-                print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
-                return result
+                let data = try networkRead(size: size)
+
+                guard data.count > 0 else
+                {
+                    print("📻 TransmissionBase: unsafeRead received 0 bytes from networkRead()")
+                    return nil
+                }
+
+                buffer.write(data)
             }
-
-            let data = try networkRead(size: size)
-
-            guard data.count > 0 else
-            {
-                print("📻 TransmissionBase: unsafeRead received 0 bytes from networkRead()")
-                return nil
-            }
-
-            buffer.append(data)
-
-            guard size <= buffer.count else
-            {
-                print("📻 TransmissionBase: unsafeRead requested size \(size) is larger than the buffer size \(buffer.count). Returning nil.")
-                return nil
-            }
-
-            let result = Data(buffer[0..<size])
-            buffer = Data(buffer[size..<buffer.count])
-            print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result.count) bytes.")
-
-            return result
+            
+            return try buffer.read(size: size)
         }
         catch
         {
-            print("📻 error in BaseConnection.unsafeRead(\(size)): \(error)")
+            print("📻 TransmissionBase: error in BaseConnection.unsafeRead(\(size)): \(error)")
             return nil
         }
     }
@@ -148,55 +134,39 @@ open class BaseConnection: Connection
         {
             return nil
         }
-
-        let size = maxSize <= buffer.count ? maxSize : buffer.count
-
-        if size > 0
+        
+        do
         {
-            let result = Data(buffer[0..<size])
-            buffer = Data(buffer[size..<buffer.count])
-
-            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
-            return result
-        }
-        else
-        {
-            // Buffer is empty, so we need to do a network read
-            var data: Data?
-            
-            while self.buffer.count < maxSize
+            if buffer.count > 0
             {
-                do
-                {
-                    data = try self.networkRead(size: maxSize - self.buffer.count)
-                }
-                catch
-                {
-                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error trying to read from the network: \(error)")
-                    break
-                }
-
-                guard let bytes = data else
-                {
-                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received a nil response when attempting to read from the network.")
-                    break
-                }
-
-                guard bytes.count > 0 else
+                let result = try buffer.read(maxSize: maxSize)
+                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
+                
+                return result
+            }
+            else
+            {
+                // Buffer is empty, so we need to do a network read
+                let data = try self.networkRead(size: maxSize - self.buffer.count)
+                
+                guard data.count > 0 else
                 {
                     print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
-                    break
+                    
+                    return nil
                 }
 
-                buffer.append(bytes)
+                buffer.write(data)
+                let result = try buffer.read(maxSize: maxSize)
+                
+                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returning \(result.count) bytes")
+                return result
             }
-            
-            let targetSize = min(maxSize, buffer.count)
-            let result = Data(buffer[0..<targetSize])
-            buffer = Data(buffer[targetSize..<buffer.count])
-            
-            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returning \(result.count) bytes")
-            return result
+        }
+        catch
+        {
+            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error trying to read from the network: \(error)")
+            return nil
         }
     }
 
