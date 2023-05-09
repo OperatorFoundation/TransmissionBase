@@ -163,35 +163,39 @@ open class BaseConnection: Connection
         {
             // Buffer is empty, so we need to do a network read
             var data: Data?
-
-            do
+            
+            while self.buffer.count < maxSize
             {
-                data = try self.networkRead(size: maxSize - self.buffer.count)
-            }
-            catch
-            {
-                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error trying to read from the network: \(error)")
-                return nil
-            }
+                do
+                {
+                    data = try self.networkRead(size: maxSize - self.buffer.count)
+                }
+                catch
+                {
+                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error trying to read from the network: \(error)")
+                    break
+                }
 
-            guard let bytes = data else
-            {
-                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received a nil response when attempting to read from the network.")
-                return nil
-            }
+                guard let bytes = data else
+                {
+                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received a nil response when attempting to read from the network.")
+                    break
+                }
 
-            guard bytes.count > 0 else
-            {
-                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
-                return nil
-            }
+                guard bytes.count > 0 else
+                {
+                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
+                    break
+                }
 
-            buffer.append(bytes)
+                buffer.append(bytes)
+            }
+            
             let targetSize = min(maxSize, buffer.count)
             let result = Data(buffer[0..<targetSize])
             buffer = Data(buffer[targetSize..<buffer.count])
-
-            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
+            
+            print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returning \(result.count) bytes")
             return result
         }
     }
