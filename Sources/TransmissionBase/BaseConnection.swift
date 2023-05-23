@@ -193,7 +193,7 @@ open class BaseConnection: Connection
         }
         catch
         {
-            print("📻 error in BaseConnection.write(\(data.count) bytes - \(data.hex) - \"\(data.string)\"")
+            print("📻 error in BaseConnection.write(\(data.count) bytes - \(data.hex)")
             return false
         }
 
