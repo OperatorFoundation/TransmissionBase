@@ -85,7 +85,7 @@ open class BaseConnection: Connection
             return nil
         }
         
-        print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result?.count) bytes.")
+        print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result?.count ?? 0) bytes.")
         
         return result
     }
