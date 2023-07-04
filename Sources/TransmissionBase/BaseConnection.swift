@@ -103,6 +103,9 @@ open class BaseConnection: Connection
             while size > buffer.count
             {
                 let data = try networkRead(size: size)
+                print("data: \(data)")
+                print("data.count: \(data.count)")
+                print("buffer.count: \(buffer.count)")
 
                 guard data.count > 0 else
                 {
@@ -111,6 +114,7 @@ open class BaseConnection: Connection
                 }
 
                 buffer.write(data)
+                print("buffer.write(data): \(data)")
             }
             
             return try buffer.read(size: size)
