@@ -240,7 +240,7 @@ open class BaseConnection: Connection
         throw BaseConnectionError.unimplemented
     }
 
-    open func networkRead(size: Int, timeoutSeconds: Int = 60) throws -> Data
+    open func networkRead(size: Int) throws -> Data
     {
         throw BaseConnectionError.unimplemented
     }
