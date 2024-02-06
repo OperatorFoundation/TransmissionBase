@@ -24,6 +24,7 @@ open class BaseConnection: Connection
 {
     let id: Int
     let log: Logger?
+    let verbose: Bool
 
     var udpIncomingPort: Int? = nil
 
@@ -33,10 +34,11 @@ open class BaseConnection: Connection
 
     var buffer = Straw()
 
-    public init?(id: Int, logger: Logger? = nil)
+    public init?(id: Int, logger: Logger? = nil, verbose: Bool = false)
     {
         self.id = id
         self.log = logger
+        self.verbose = verbose
     }
 
     open func read(size: Int) -> Data?
@@ -51,7 +53,11 @@ open class BaseConnection: Connection
         
         if size == 0
         {
-            print("📻 TransmissionBase: requested read size was zero")
+            if verbose
+            {
+                print("📻 TransmissionBase: requested read size was zero")
+            }
+
             return nil
         }
         
@@ -85,8 +91,11 @@ open class BaseConnection: Connection
             return nil
         }
         
-        print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result?.count ?? 0) bytes.")
-        
+        if verbose
+        {
+            print("📻 TransmissionBase: TransmissionConnection.read(size: \(size)) -> returned \(result?.count ?? 0) bytes.")
+        }
+
         return result
     }
 
@@ -96,25 +105,41 @@ open class BaseConnection: Connection
         {
             if size == 0
             {
-                print("📻 TransmissionBase: requested read size was zero")
+                if verbose
+                {
+                    print("📻 TransmissionBase: requested read size was zero")
+                }
+
                 return nil
             }
 
             while size > buffer.count
             {
                 let data = try networkRead(size: size)
-                print("data: \(data)")
-                print("data.count: \(data.count)")
-                print("buffer.count: \(buffer.count)")
+
+                if verbose
+                {
+                    print("data: \(data)")
+                    print("data.count: \(data.count)")
+                    print("buffer.count: \(buffer.count)")
+                }
 
                 guard data.count > 0 else
                 {
-                    print("📻 TransmissionBase: unsafeRead received 0 bytes from networkRead()")
+                    if verbose
+                    {
+                        print("📻 TransmissionBase: unsafeRead received 0 bytes from networkRead()")
+                    }
+
                     return nil
                 }
 
                 buffer.write(data)
-                print("buffer.write(data): \(data)")
+
+                if verbose
+                {
+                    print("buffer.write(data): \(data)")
+                }
             }
             
             return try buffer.read(size: size)
@@ -144,8 +169,12 @@ open class BaseConnection: Connection
             if buffer.count > 0
             {
                 let result = try buffer.read(maxSize: maxSize)
-                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
-                
+
+                if verbose
+                {
+                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returned \(result.count) bytes")
+                }
+
                 return result
             }
             else
@@ -155,15 +184,22 @@ open class BaseConnection: Connection
                 
                 guard data.count > 0 else
                 {
-                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
-                    
+                    if verbose
+                    {
+                        print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - Error received an empty response when attempting to read from the network.")
+                    }
+
                     return nil
                 }
 
                 buffer.write(data)
                 let result = try buffer.read(maxSize: maxSize)
                 
-                print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returning \(result.count) bytes")
+                if verbose
+                {
+                    print("📻 TransmissionBase: TransmissionConnection.read(maxSize: \(maxSize)) - returning \(result.count) bytes")
+                }
+                
                 return result
             }
         }
